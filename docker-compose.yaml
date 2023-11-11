@@ -1,0 +1,78 @@
+version: '3.1'
+services:
+
+  users-api:
+    build: ./app
+    image: localhost/rocket-mongo-api:latest
+    ports:
+      - "8000:8000"
+    links:
+      - mongodb
+    environment:
+      - MONGO_URI=mongodb://rocketApi:password@mongodb:27017/rocketApiDb?w=majority
+
+  mongodb:
+    image: mongo:5.0.22
+    restart: always
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=user
+      - MONGO_INITDB_ROOT_PASSWORD=pass
+    volumes:
+      - type: bind
+        source: ./data
+        target: /data/db
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    ports:
+      - "8080:8080"
+    restart: always
+    deploy:
+      mode: global
+
+  prometheus:
+    image: prom/prometheus
+    restart: always
+    volumes:
+      - ./prometheus:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - "9090:9090"
+    links:
+      - cadvisor:cadvisor
+#      - alertmanager:alertmanager
+    depends_on:
+      - cadvisor
+
+  grafana:
+    image: grafana/grafana
+    user: '472'
+    restart: always
+    environment:
+      GF_INSTALL_PLUGINS: 'grafana-clock-panel,grafana-simple-json-datasource'
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning/:/etc/grafana/provisioning/
+    env_file:
+      - ./grafana/config.monitoring
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+
+volumes:
+  prometheus_data: {}
+  grafana_data: {}
