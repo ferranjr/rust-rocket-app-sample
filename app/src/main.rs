@@ -23,3 +23,18 @@ fn rocket() -> _ {
         .mount("/", routes![get_all_users])
         .mount("/private/metrics", prometheus)
 }
+
+#[cfg(test)]
+mod test {
+    use super::rocket;
+    use rocket::local::blocking::Client;
+    use rocket::http::Status;
+
+    #[test]
+    fn get_prometheus_metrics() {
+        let client = Client::tracked(rocket()).expect("Valid Rocket instance");
+        let response = client.get("/private/metrics").dispatch();
+        assert_eq!(response.status(), Status::Ok);
+        // assert_eq!(response.body_string(), Some("test_me".into()));
+    }
+}
