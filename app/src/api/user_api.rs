@@ -1,15 +1,17 @@
+use std::borrow::Cow;
 use crate::{
     models::user_model::User,
     repository::mongodb_repo::MongoRepo
 };
-use mongodb::{bson::oid::ObjectId, results::InsertOneResult};
+use mongodb::{bson::oid::ObjectId};
 use rocket::{http::Status, serde::json::Json, State};
+use rocket::response::status::Created;
 
 #[post("/user", data = "<new_user>")]
 pub fn create_user(
     db: &State<MongoRepo>,
     new_user: Json<User>,
-) -> Result<Json<InsertOneResult>, Status> {
+) -> Result<Created<Json<ObjectId>>, Status> {
     let data = User {
         id: None,
         name: new_user.name.to_owned(),
@@ -17,10 +19,14 @@ pub fn create_user(
         title: new_user.title.to_owned(),
     };
 
-    let user_detail = db.create_user(data);
+    let create_user_result = db.create_user(data);
 
-    match user_detail {
-        Ok(user) => Ok(Json(user)),
+    match create_user_result {
+        Ok(user_created_object_id) =>
+            Ok(
+                Created::new(Cow::from(format!("/user/{}",user_created_object_id.to_hex())))
+                    .body(Json(user_created_object_id))
+            ),
         Err(_) => Err(Status::InternalServerError),
     }
 }
@@ -62,12 +68,12 @@ pub fn update_user(
             if update.matched_count == 1 {
                 let updated_user_info = db.get_user(&id);
 
-                return match updated_user_info {
+                match updated_user_info {
                     Ok(user) => Ok(Json(user)),
                     Err(_) => Err(Status::InternalServerError),
-                };
+                }
             } else {
-                return Err(Status::NotFound);
+                Err(Status::NotFound)
             }
         }
         Err(_) => Err(Status::InternalServerError),
@@ -85,9 +91,9 @@ pub fn delete_user(db: &State<MongoRepo>, path: String) -> Result<Json<&str>, St
     match result {
         Ok(res) => {
             if res.deleted_count == 1 {
-                return Ok(Json("User successfully deleted!"));
+                Ok(Json("User successfully deleted!"))
             } else {
-                return Err(Status::NotFound);
+                Err(Status::NotFound)
             }
         }
         Err(_) => Err(Status::InternalServerError),
@@ -96,7 +102,8 @@ pub fn delete_user(db: &State<MongoRepo>, path: String) -> Result<Json<&str>, St
 
 #[get("/users")]
 pub fn get_all_users(db: &State<MongoRepo>) -> Result<Json<Vec<User>>, Status> {
-    let users = db.get_all_users();
+    // TODO: Pagination should be coming from URL
+    let users = db.get_all_users(50);
 
     match users {
         Ok(users) => Ok(Json(users)),

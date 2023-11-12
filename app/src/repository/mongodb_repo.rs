@@ -5,9 +5,10 @@ use dotenv::dotenv;
 
 use mongodb::{
     bson::{doc, extjson::de::Error, oid::ObjectId},
-    results::{InsertOneResult, UpdateResult, DeleteResult},
+    results::{UpdateResult, DeleteResult},
     sync::{Client, Collection},
 };
+use mongodb::options::FindOptions;
 
 use crate::models::user_model::User;
 
@@ -28,7 +29,7 @@ impl MongoRepo {
         MongoRepo { col }
     }
 
-    pub fn create_user(&self, new_user: User) -> Result<InsertOneResult, Error> {
+    pub fn create_user(&self, new_user: User) -> Result<ObjectId, Error> {
         let new_doc = User {
             id: None,
             name: new_user.name,
@@ -38,8 +39,8 @@ impl MongoRepo {
         let user = self
             .col
             .insert_one(new_doc, None)
-            .ok()
-            .expect("Error creating user");
+            .expect("Error creating user")
+            .inserted_id.as_object_id().unwrap();
 
         Ok(user)
     }
@@ -87,10 +88,14 @@ impl MongoRepo {
         Ok(user_detail)
     }
 
-    pub fn get_all_users(&self) -> Result<Vec<User>, Error> {
+    pub fn get_all_users(&self, limit: i64) -> Result<Vec<User>, Error> {
+        let find_options = FindOptions::builder()
+            .limit(limit)
+            .build();
+
         let cursors = self
             .col
-            .find(None, None)
+            .find(None, Some(find_options))
             .ok()
             .expect("Error getting list of users");
         let users = cursors.map(|doc| doc.unwrap()).collect();
