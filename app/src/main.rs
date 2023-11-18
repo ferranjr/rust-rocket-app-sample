@@ -5,6 +5,7 @@ mod repository;
 #[macro_use]
 extern crate rocket;
 
+use rocket::shield::Shield;
 use rocket_prometheus::PrometheusMetrics;
 use api::user_api::{create_user, delete_user, get_user, update_user, get_all_users};
 use repository::mongodb_repo::MongoRepo;
@@ -13,7 +14,9 @@ use repository::mongodb_repo::MongoRepo;
 fn rocket() -> _ {
     let prometheus = PrometheusMetrics::new();
     let db = MongoRepo::init();
+    let shield = Shield::default();
     rocket::build()
+        .attach(shield)
         .attach(prometheus.clone())
         .manage(db)
         .mount("/", routes![create_user])
