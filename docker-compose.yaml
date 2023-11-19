@@ -24,6 +24,18 @@ services:
         source: ./data
         target: /data/db
 
+  mongodb_exporter:
+    image: percona/mongodb_exporter:0.40.0
+    restart: always
+    ports:
+      - "9216:9216"
+    links:
+      - mongodb
+    environment:
+      - MONGODB_USERNAME=user
+      - MONGODB_PASSWORD=pass
+      - MONGODB_URI=mongodb://mongodb:27017/rocketApiDb
+
   cadvisor:
     image: gcr.io/cadvisor/cadvisor
     volumes:
@@ -52,6 +64,7 @@ services:
       - "9090:9090"
     links:
       - cadvisor:cadvisor
+      - mongodb_exporter
 #      - alertmanager:alertmanager
     depends_on:
       - cadvisor

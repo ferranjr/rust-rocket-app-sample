@@ -38,3 +38,9 @@ scrape_configs:
           - 'tasks.cadvisor'
         type: 'A'
         port: 8080
+
+  - job_name: 'mongodb_exporter'
+    # Override the global default and scrape targets from this job every 5 seconds.
+    scrape_interval: 5s
+    static_configs:
+      - targets: [ 'host.docker.internal:9216' ]

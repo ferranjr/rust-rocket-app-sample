@@ -42,11 +42,13 @@ async fn main() -> Result<(), GooseError> {
         )
         .register_scenario(
             scenario!("Create user")
-                .set_weight(1)?
+                .set_weight(5)?
                 .register_transaction(transaction!(loadtest_create_user))
         )
-        .set_default(GooseDefault::StartupTime, 60)?
-        .set_default(GooseDefault::ThrottleRequests, 500)?
+        .set_default(GooseDefault::Host, "http://localhost:8000")?
+        .set_default(GooseDefault::NoPrintMetrics, true)?
+        .set_default(GooseDefault::StartupTime, 120)?
+        .set_default(GooseDefault::ThrottleRequests, 1000)?
         .execute()
         .await?;
 

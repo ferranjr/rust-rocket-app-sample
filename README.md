@@ -46,6 +46,8 @@ you need RUST set up for that. Check Goose book to see how to run them
 * [ ] Add basic auth/apikey
 * [ ] Second API Server to interact between services
 * [ ] Easy To Run Performance tests
+* [ ] Export Mongo metrics into prometheus: mongo_exporter
+* [ ] Export Docker metrics intro prometheus: cadvisor
 * [ ] Add grafana dashboards to the repo
 
 ## Sources used
@@ -56,4 +58,6 @@ the following blogs:
   * This article is most of the code of the app, started from scratch but found this article and used it to rewrite it in a more structured way
   * The article is great and should be the reference source to building a similar app for newbies like me
 * [The Goose Book](https://book.goose.rs/example/simple.html)
+* [Grafana Hisotgram How To](https://opstrace.com/blog/grafana-histogram-howto)
+* [Have You Been Using Histrograms Metrics Correctly](https://medium.com/mercari-engineering/have-you-been-using-histogram-metrics-correctly-730c9547a7a9)
 
